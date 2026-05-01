@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+
+  const APP_URL = "https://m5rdev.github.io/MuslimEncyclopedia";
+  const ONLINE_URL = "https://m5rdev.github.io/MuslimEncyclopedia-online";
+
+  let raw = decodeURIComponent(location.pathname || "");
+
+  // =========================
+  // 🔧 NORMALIZE
+  // =========================
+
+  function removeDuplicates(text) {
+    return text.replace(/(.)\1+/g, "$1");
+  }
+
+  function normalize(text) {
+    return removeDuplicates(
+      text
+        .toLowerCase()
+        .trim()
+        .replace(/[\s\-_./]+/g, "")
+        .replace(/[أإآ]/g, "ا")
+        .replace(/ى/g, "ي")
+        .replace(/ة/g, "ه")
+        .replace(/ؤ/g, "و")
+        .replace(/ئ/g, "ي")
+        .replace(/[^\w\u0600-\u06FF]/g, "")
+    );
+  }
+
+  function splitWords(text) {
+    return text
+      .toLowerCase()
+      .split(/[\s\-_./]+/)
+      .map(w => normalize(w))
+      .filter(Boolean);
+  }
+
+  let clean = normalize(raw);
+  let words = splitWords(raw);
+
+  // =========================
+  // 🧠 KEYWORDS
+  // =========================
+
+  const MUSLIM_KEYS = [
+    // أساسي
+    "muslim","islam","quran","hadith","deen","islamic",
+
+    // موسوعة
+    "encyclopedia","muslimencyclopedia","muslim-encyclopedia",
+    "muslimapp","islamapp",
+
+    // عربي
+    "موسوعه","موسوعهالمسلم","المسلم","اسلام","دين",
+
+    // أخطاء
+    "moslem","muslem","muslm","islm"
+  ];
+
+  const ONLINE_KEYS = [
+    // أساسي
+    "online","live","web","realtime",
+
+    // مركبة
+    "muslimonline","muslim-live","muslimweb",
+    "encyclopediaonline","islamonline","quranonline",
+
+    // عربي
+    "اونلاين","انلاين","مباشر","لايف","حي","بث",
+
+    // مركبة عربي
+    "موسوعهاونلاين","المسلماونلاين",
+
+    // أخطاء
+    "onlin","onlne","on-line","liv","lve"
+  ];
+
+  // =========================
+  // 🧠 SIMILARITY
+  // =========================
+
+  function levenshtein(a, b) {
+    const matrix = [];
+    for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+    for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        matrix[i][j] = b[i-1] === a[j-1]
+          ? matrix[i-1][j-1]
+          : Math.min(
+              matrix[i-1][j-1] + 1,
+              matrix[i][j-1] + 1,
+              matrix[i-1][j] + 1
+            );
+      }
+    }
+    return matrix[b.length][a.length];
+  }
+
+  function similarity(a, b) {
+    if (!a || !b) return 0;
+    let longer = a.length > b.length ? a : b;
+    let shorter = a.length > b.length ? b : a;
+    let len = longer.length;
+    if (len === 0) return 1;
+    return (len - levenshtein(longer, shorter)) / len;
+  }
+
+  // =========================
+  // 🎯 DETECTION
+  // =========================
+
+  function matchKeywords(keys, text, words) {
+    let score = 0;
+
+    for (let key of keys) {
+      let k = normalize(key);
+
+      if (text.includes(k)) score += 5;
+
+      for (let w of words) {
+        if (w.includes(k) || k.includes(w)) score += 4;
+
+        let sim = similarity(w, k);
+        if (sim > 0.8) score += 3;
+        else if (sim > 0.6) score += 1;
+      }
+
+      let simFull = similarity(text, k);
+      if (simFull > 0.75) score += 2;
+    }
+
+    return score;
+  }
+
+  let muslimScore = matchKeywords(MUSLIM_KEYS, clean, words);
+  let onlineScore = matchKeywords(ONLINE_KEYS, clean, words);
+
+  // =========================
+  // 🚀 DECISION
+  // =========================
+
+  if (muslimScore < 3) {
+    // مش متعلق بالموسوعة
+    location.replace(APP_URL);
+    return;
+  }
+
+  if (onlineScore > 3) {
+    location.replace(ONLINE_URL);
+  } else {
+    location.replace(APP_URL);
+  }
+
+})();
+</script>
+</head>
+<body></body>
+</html>
