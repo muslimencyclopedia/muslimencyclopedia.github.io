@@ -1,6 +1,6 @@
 # muslimencolopedia.github.io
-muslimencolopedia.github.io
-muslimencolopedia.github.io/موسوعة المسلم
-muslimencolopedia.github.io/main
-muslimencolopedia.github.io/MuslimEncyclopedia
-muslimencolopedia.github.io/MuslimEncyclopedia-online 
+https://muslimencolopedia.github.io
+https://muslimencolopedia.github.io/موسوعة المسلم
+https://muslimencolopedia.github.io/main
+https://muslimencolopedia.github.io/MuslimEncyclopedia
+https://muslimencolopedia.github.io/MuslimEncyclopedia-online 
